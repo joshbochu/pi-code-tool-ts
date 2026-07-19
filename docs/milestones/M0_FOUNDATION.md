@@ -1,6 +1,6 @@
 # M0 — Foundation and Executable Specification
 
-- Status: `Ready`
+- Status: `In progress`
 - Active unit: M0.1 only
 - Canonical sequence: [PROJECT_GOALS.md](../../PROJECT_GOALS.md#milestone-plan)
 - Progress ledger: [PROJECT_PROGRESS.md](../../PROJECT_PROGRESS.md)
@@ -31,9 +31,10 @@ Observed local baseline when this plan was written:
 | Tool | Version |
 |---|---:|
 | Bun | 1.3.11 |
-| Pi | 0.80.6 |
+| Host Pi | 0.80.6 |
+| Project test Pi | 0.80.10 |
 
-These observed versions explain the initial lockfile and smoke-test environment. The implementer must record the versions actually used and must report—not silently absorb—an incompatible API change.
+The project test Pi is pinned as a development dependency and is the reproducible smoke-test runtime. The host Pi is recorded separately and is not implied to have been exercised by a Bun package script. The implementer must record the versions actually used and must report—not silently absorb—an incompatible API change.
 
 ## Milestone boundaries
 
@@ -49,7 +50,7 @@ These observed versions explain the initial lockfile and smoke-test environment.
 ### Excluded
 
 - A model-facing `code` tool.
-- Bun subprocesses, Workers, IPC, sockets, or process managers.
+- Product/runtime subprocesses, Workers, IPC, sockets, or process managers. A test-only smoke harness may launch the Pi CLI and speak RPC solely to prove extension loading.
 - TypeScript transformation or evaluation.
 - Tool adapters, approvals, output streaming, or persistence.
 - Dependencies copied or adapted from OMP or `pi-code-tool`.
@@ -105,6 +106,8 @@ pi-code-tool-ts/
 │  └─ extension.ts
 ├─ test/
 │  └─ extension.test.ts
+├─ scripts/
+│  └─ smoke-pi.ts
 ├─ docs/
 │  ├─ learning/
 │  │  └─ M0.1-package-scaffold.md
@@ -133,7 +136,8 @@ The implementation must preserve these decisions unless it stops and proposes an
 - Pi discovery: explicit `pi.extensions` entry for `./src/extension.ts`.
 - Discoverability keyword: `pi-package`.
 - Pi API types: current official `@earendil-works/pi-coding-agent`, not an obsolete package name found in older examples.
-- Pi core imports used by the package must be declared as peer dependencies with `"*"`, per Pi's package guidance, and installed as development dependencies when required for local checking.
+- Pi core imports used by the package must be declared as peer dependencies with `"*"`, per Pi's package guidance.
+- The Pi CLI used for development checks must be pinned to an exact development-dependency version so a lockfile refresh cannot silently change the tested API or loader.
 - Runtime dependencies: none for M0.1.
 - Generated JavaScript: none; TypeScript is loaded directly by Pi and checked with `tsc --noEmit`.
 - Lockfile: Bun's lockfile is committed.
@@ -145,9 +149,9 @@ Required scripts:
 | `test` | Run `bun test`. |
 | `typecheck` | Run strict TypeScript checking without emitting files. |
 | `check` | Run type-checking and tests. |
-| `smoke:pi` | Use the installed Pi CLI in offline mode to explicitly load only `src/extension.ts` and exit via a non-interactive command such as `--list-models`. |
+| `smoke:pi` | Use the project-pinned Pi CLI with an isolated temporary config directory, load the package root through no-session RPC, require a successful response, and require a missing-extension negative control to fail. |
 
-The Pi smoke check remains separate from `check` so normal unit tests do not silently depend on a global Pi installation. It is nevertheless mandatory evidence for M0.1 in the implementation environment.
+The Pi smoke check remains separate from `check` so normal unit tests do not silently start Pi. It uses the project dependency rather than whichever global `pi` happens to appear on `PATH`, and it must not use the user's models, credentials, or settings. It is mandatory evidence for M0.1.
 
 ## Extension-entrypoint rules
 
@@ -185,8 +189,8 @@ The implementer must report each invariant as `PASS`, `FAIL`, or `BLOCKED` with 
 | M0.1-I3 | Strict type-checking emits no generated files. | `bun run typecheck`; clean status after check |
 | M0.1-I4 | The extension default-exports a Pi-compatible factory. | Type-check and export-shape test |
 | M0.1-I5 | Loading or invoking the factory has no observable product behavior. | Hostile-Proxy test and source inspection |
-| M0.1-I6 | No process, Worker, IPC, timer, socket, watcher, tool, event, or model call exists. | Focused source review and diff inspection |
-| M0.1-I7 | The real installed Pi CLI loads the explicit extension path without a loader error. | `bun run smoke:pi` exit code 0 |
+| M0.1-I6 | The extension and its product import graph start no process, Worker, IPC, timer, socket, watcher, tool, event, or model call. The smoke harness is test-only and may launch Pi. | Focused source review and diff inspection |
+| M0.1-I7 | The project-pinned Pi CLI resolves the package manifest, starts in isolated no-session RPC mode, answers a state request, and rejects a missing extension path. | `bun run smoke:pi` exit code 0 and its positive/negative assertions |
 | M0.1-I8 | Bun tests pass without network access or secrets. | `bun test` |
 | M0.1-I9 | The learning note satisfies the eight-part learning-note contract. | File review |
 | M0.1-I10 | Only scaffold, test, learning, and progress files changed. | `git diff --stat` and `git status --short` |
@@ -203,7 +207,7 @@ The implementer must report each invariant as `PASS`, `FAIL`, or `BLOCKED` with 
 6. Add the inert extension factory.
 7. Add the narrow hostile-Proxy tests.
 8. Run the fast checks and fix only scaffold-related failures.
-9. Run the real Pi smoke load.
+9. Run the isolated package-root Pi RPC smoke load and its negative control.
 10. Write `docs/learning/M0.1-package-scaffold.md` using the required eight headings.
 11. Update the progress ledger to `Ready for review` and add an evidence row.
 12. Run final diff hygiene checks and stop.
@@ -234,9 +238,9 @@ If `bun install --frozen-lockfile` cannot run immediately after initially genera
 ## Failure and blocker policy
 
 - If Bun is missing, stop and report the missing prerequisite.
-- If Pi is missing, unit tests may continue, but M0.1 cannot become `Ready for review` until the real smoke load is run somewhere named in the evidence.
+- If the project Pi executable is missing, run the frozen install. M0.1 cannot become `Ready for review` until the isolated RPC smoke load passes.
 - If the current Pi API differs from the official contract cited above, record versions and exact errors, then stop for a plan update.
-- If the Pi smoke command requires model credentials or makes a model call, replace it with another non-interactive loader path; do not add credentials merely to prove module loading.
+- If the Pi smoke command reads user credentials/settings or makes a model call, treat that as a failure; package loading must be proven with an isolated temporary Pi config and no model call.
 - If a test seems to require a real runtime, tool registration, or event handler, the test belongs to a later unit.
 - If unrelated pre-existing changes are present, preserve them and keep them out of the proposed M0.1 commit.
 - Never weaken an invariant or skip a check solely to make the unit appear complete.

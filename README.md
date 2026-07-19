@@ -6,7 +6,7 @@ The central idea is simple: instead of sending every intermediate tool result ba
 
 ## Status
 
-This repository is currently in the design and research phase. It contains the project contract and an incremental, commit-oriented roadmap; there is no implementation yet.
+M0.1, the inert Bun/TypeScript package scaffold, is implemented and awaiting human acceptance. No runtime, code execution, tool bridge, or other product behavior exists yet.
 
 - [Project goals](./PROJECT_GOALS.md) defines the product promise, competitive baseline, V0 scope, learning contract, and milestone outcomes.
 - [Project progress](./PROJECT_PROGRESS.md) records the active unit, accepted evidence, and next permitted work.
