@@ -336,6 +336,8 @@ Dependency additions should be isolated when practical so their purpose and gene
 
 ## Milestone plan
 
+This is the canonical commit-sized implementation sequence. Current delivery status lives in [PROJECT_PROGRESS.md](./PROJECT_PROGRESS.md), and detailed per-milestone handoffs live under [`docs/milestones/`](./docs/milestones/). The milestone labels in `PI_CODE_MODE_ROADMAP.md` describe strategic architecture phases and are not implementation-unit identifiers.
+
 ### M0 — Foundation and executable specification
 
 Outcome: a human understands the product boundary, can load the extension skeleton in Pi, and can run a test suite before runtime complexity begins.
