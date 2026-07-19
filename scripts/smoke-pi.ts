@@ -9,6 +9,23 @@ interface PiRun {
   stdout: string;
 }
 
+interface SmokeRpcRequest {
+  id: typeof SMOKE_RPC_ID;
+  type: typeof SMOKE_RPC_COMMAND;
+}
+
+interface SmokeRpcResponse {
+  command?: unknown;
+  id?: unknown;
+  success?: unknown;
+  type?: unknown;
+}
+
+const SMOKE_RPC_ID = "m0.1-smoke";
+const SMOKE_RPC_COMMAND = "get_state";
+const SMOKE_RPC_RESPONSE_TYPE = "response";
+const MISSING_EXTENSION_PATH = "./src/__m0_1_missing_extension__.ts";
+
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const piExecutable = join(
   projectRoot,
@@ -16,6 +33,11 @@ const piExecutable = join(
   ".bin",
   process.platform === "win32" ? "pi.cmd" : "pi",
 );
+
+const smokeRpcRequest: SmokeRpcRequest = {
+  id: SMOKE_RPC_ID,
+  type: SMOKE_RPC_COMMAND,
+};
 
 function formatFailure(message: string, run: PiRun): string {
   return [
@@ -93,20 +115,15 @@ async function runPi(
   return { exitCode, stdout, stderr };
 }
 
-function findSmokeResponse(stdout: string): unknown {
+function findSmokeResponse(stdout: string): SmokeRpcResponse | undefined {
   for (const line of stdout.split("\n")) {
     if (!line) continue;
     try {
-      const record = JSON.parse(line) as {
-        command?: unknown;
-        id?: unknown;
-        success?: unknown;
-        type?: unknown;
-      };
+      const record = JSON.parse(line) as SmokeRpcResponse;
       if (
-        record.command === "get_state" &&
-        record.id === "m0.1-smoke" &&
-        record.type === "response" &&
+        record.command === SMOKE_RPC_COMMAND &&
+        record.id === SMOKE_RPC_ID &&
+        record.type === SMOKE_RPC_RESPONSE_TYPE &&
         record.success === true
       ) {
         return record;
@@ -137,7 +154,7 @@ try {
   const valid = await runPi(
     ".",
     agentDir,
-    '{"id":"m0.1-smoke","type":"get_state"}\n',
+    `${JSON.stringify(smokeRpcRequest)}\n`,
   );
   if (valid.exitCode !== 0) {
     throw new Error(formatFailure("Pi failed to load the package root", valid));
@@ -148,10 +165,7 @@ try {
     );
   }
 
-  const invalid = await runPi(
-    "./src/__m0_1_missing_extension__.ts",
-    agentDir,
-  );
+  const invalid = await runPi(MISSING_EXTENSION_PATH, agentDir);
   if (invalid.exitCode === 0) {
     throw new Error(
       formatFailure(
