@@ -2,6 +2,11 @@
 
 - Status: proposed
 - Last updated: 2026-07-19
+- Role: strategic architecture and comparison roadmap
+- Canonical commit sequence: [PROJECT_GOALS.md](./PROJECT_GOALS.md#milestone-plan)
+- Current delivery status: [PROJECT_PROGRESS.md](./PROJECT_PROGRESS.md)
+
+> The milestone labels in this document group strategic architecture work. They do not correspond one-to-one with the commit-sized M0–M11 delivery sequence in `PROJECT_GOALS.md`. Use the project goals, progress ledger, and `docs/milestones/` handoffs to authorize implementation work.
 
 ## Objective
 

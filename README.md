@@ -9,9 +9,11 @@ The central idea is simple: instead of sending every intermediate tool result ba
 This repository is currently in the design and research phase. It contains the project contract and an incremental, commit-oriented roadmap; there is no implementation yet.
 
 - [Project goals](./PROJECT_GOALS.md) defines the product promise, competitive baseline, V0 scope, learning contract, and milestone outcomes.
+- [Project progress](./PROJECT_PROGRESS.md) records the active unit, accepted evidence, and next permitted work.
 - [Architecture and roadmap](./PI_CODE_MODE_ROADMAP.md) records the proposed runtime architecture, security model, approval policy, deferred features, and comparison set.
+- [M0 milestone plan](./docs/milestones/M0_FOUNDATION.md) is the first implementer handoff, including invariants and self-verification.
 
-The first implementation unit is M0.1: scaffold the Pi extension package. Each later unit is intended to be small enough for one focused commit and one focused human review.
+The first implementation unit is M0.1: scaffold the Pi extension package. Each later unit is intended to be small enough for one focused commit and one focused human review. Implementers stop at `Ready for review`; only a human reviewer marks a unit accepted and authorizes its commit.
 
 ## V0 trust model
 
