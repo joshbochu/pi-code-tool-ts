@@ -1,0 +1,1575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PR #2 Explained — Scaffold the inert Bun and TypeScript Pi extension</title>
+<style>
+  :root {
+    --bg: #f6f1e8;
+    --bg-elevated: #fffdf8;
+    --ink: #1c1915;
+    --muted: #5c564c;
+    --line: #d9d0c1;
+    --accent: #0f6b5c;
+    --accent-soft: #d8efe9;
+    --warm: #a85b18;
+    --warm-soft: #f7e4cf;
+    --danger: #9b2c2c;
+    --danger-soft: #f8e0e0;
+    --ok: #1f6b2d;
+    --ok-soft: #dff3e3;
+    --code-bg: #1e2430;
+    --code-ink: #e8eef7;
+    --shadow: 0 10px 30px rgba(40, 28, 10, 0.08);
+    --radius: 14px;
+    --max: 860px;
+    --mono: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+    --sans: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --ui: "Avenir Next", "Segoe UI", sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    color: var(--ink);
+    background:
+      radial-gradient(circle at top left, #fff8ea 0, transparent 35%),
+      radial-gradient(circle at top right, #e8f5f1 0, transparent 30%),
+      var(--bg);
+    font-family: var(--sans);
+    line-height: 1.65;
+    font-size: 18px;
+  }
+
+  a { color: var(--accent); }
+  a:hover { color: #0a4f44; }
+
+  .wrap {
+    width: min(var(--max), calc(100% - 2rem));
+    margin: 0 auto;
+    padding: 2.5rem 0 5rem;
+  }
+
+  header.hero {
+    padding: 1.5rem 0 2rem;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 2rem;
+  }
+
+  .eyebrow {
+    font-family: var(--ui);
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--warm);
+    font-weight: 700;
+    margin: 0 0 0.75rem;
+  }
+
+  h1 {
+    font-size: clamp(1.9rem, 4vw, 2.7rem);
+    line-height: 1.15;
+    margin: 0 0 1rem;
+    letter-spacing: -0.02em;
+  }
+
+  .lede {
+    font-size: 1.12rem;
+    color: var(--muted);
+    max-width: 42rem;
+    margin: 0 0 1.25rem;
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    font-family: var(--ui);
+    font-size: 0.86rem;
+  }
+
+  .chip {
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.28rem 0.75rem;
+    color: var(--muted);
+  }
+
+  .chip strong { color: var(--ink); font-weight: 700; }
+
+  nav.toc {
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 1.2rem 1.3rem 1.3rem;
+    box-shadow: var(--shadow);
+    margin: 1.5rem 0 2.5rem;
+  }
+
+  nav.toc h2 {
+    font-family: var(--ui);
+    font-size: 0.84rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 0 0 0.8rem;
+    color: var(--muted);
+  }
+
+  nav.toc ol {
+    margin: 0;
+    padding-left: 1.2rem;
+  }
+
+  nav.toc li { margin: 0.35rem 0; }
+  nav.toc a { text-decoration: none; }
+  nav.toc a:hover { text-decoration: underline; }
+
+  section {
+    margin: 3rem 0;
+    scroll-margin-top: 1.2rem;
+  }
+
+  h2 {
+    font-size: clamp(1.5rem, 3vw, 1.95rem);
+    line-height: 1.2;
+    margin: 0 0 1rem;
+    letter-spacing: -0.015em;
+    border-bottom: 2px solid var(--line);
+    padding-bottom: 0.45rem;
+  }
+
+  h3 {
+    font-size: 1.18rem;
+    margin: 1.8rem 0 0.7rem;
+    font-family: var(--ui);
+  }
+
+  p { margin: 0.85rem 0; }
+
+  ul, ol { padding-left: 1.25rem; }
+  li { margin: 0.35rem 0; }
+
+  .callout {
+    border-radius: 12px;
+    padding: 1rem 1.1rem;
+    margin: 1.25rem 0;
+    border: 1px solid var(--line);
+    background: var(--bg-elevated);
+  }
+
+  .callout.def { border-left: 5px solid var(--accent); background: var(--accent-soft); }
+  .callout.warn { border-left: 5px solid var(--warm); background: var(--warm-soft); }
+  .callout.ok { border-left: 5px solid var(--ok); background: var(--ok-soft); }
+  .callout.danger { border-left: 5px solid var(--danger); background: var(--danger-soft); }
+
+  .callout .label {
+    font-family: var(--ui);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 800;
+    margin: 0 0 0.35rem;
+  }
+
+  .callout p:last-child { margin-bottom: 0; }
+  .callout p:first-of-type { margin-top: 0.2rem; }
+
+  pre, .code {
+    font-family: var(--mono);
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    border-radius: 12px;
+    padding: 1rem 1.05rem;
+    overflow-x: auto;
+    font-size: 0.86rem;
+    line-height: 1.5;
+    margin: 1rem 0;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+  }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.9em;
+    background: rgba(15, 107, 92, 0.08);
+    padding: 0.08em 0.35em;
+    border-radius: 5px;
+  }
+
+  pre code {
+    background: transparent;
+    padding: 0;
+    color: inherit;
+    font-size: inherit;
+  }
+
+  .figure {
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 1.1rem;
+    margin: 1.4rem 0;
+    box-shadow: var(--shadow);
+  }
+
+  .figure .caption {
+    font-family: var(--ui);
+    font-size: 0.86rem;
+    color: var(--muted);
+    margin-top: 0.85rem;
+  }
+
+  .figure h4 {
+    margin: 0 0 0.85rem;
+    font-family: var(--ui);
+    font-size: 0.92rem;
+  }
+
+  /* Diagram family: flow nodes */
+  .flow {
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  .flow-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+  }
+
+  @media (min-width: 720px) {
+    .flow-row.cols-3 { grid-template-columns: repeat(3, 1fr); }
+    .flow-row.cols-4 { grid-template-columns: repeat(4, 1fr); }
+    .flow-row.cols-2 { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .node {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 0.75rem 0.85rem;
+    background: #fff;
+    min-height: 4.2rem;
+  }
+
+  .node .kicker {
+    font-family: var(--ui);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.2rem;
+  }
+
+  .node .title {
+    font-family: var(--ui);
+    font-weight: 700;
+    font-size: 0.98rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .node .detail {
+    font-size: 0.88rem;
+    color: var(--muted);
+  }
+
+  .node.accent { background: var(--accent-soft); border-color: #9ecfc4; }
+  .node.warm { background: var(--warm-soft); border-color: #e4c39a; }
+  .node.ok { background: var(--ok-soft); border-color: #9dcea8; }
+  .node.danger { background: var(--danger-soft); border-color: #e2b0b0; }
+  .node.muted { background: #f0ebe2; }
+
+  .arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-family: var(--ui);
+    font-size: 0.85rem;
+    gap: 0.4rem;
+    padding: 0.1rem 0;
+  }
+
+  .arrow span.line {
+    height: 1px;
+    flex: 1;
+    background: var(--line);
+  }
+
+  /* Diagram family: mini terminal / UI */
+  .terminal {
+    background: #141820;
+    color: #dce6f4;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #2a3344;
+    font-family: var(--mono);
+    font-size: 0.84rem;
+  }
+
+  .terminal .bar {
+    background: #222a38;
+    color: #9aa8bd;
+    padding: 0.45rem 0.8rem;
+    font-family: var(--ui);
+    font-size: 0.75rem;
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+  }
+
+  .dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .dot.r { background: #ff5f57; }
+  .dot.y { background: #febc2e; }
+  .dot.g { background: #28c840; }
+
+  .terminal .body {
+    padding: 0.9rem 1rem 1.05rem;
+    white-space: pre-wrap;
+    line-height: 1.55;
+  }
+
+  .terminal .prompt { color: #7ddea4; }
+  .terminal .dim { color: #8b97ab; }
+  .terminal .ok { color: #7ddea4; }
+  .terminal .bad { color: #ff8f8f; }
+
+  /* Diff cards */
+  .diff-grid {
+    display: grid;
+    gap: 0.8rem;
+  }
+
+  @media (min-width: 760px) {
+    .diff-grid.two { grid-template-columns: 1fr 1fr; }
+  }
+
+  .file-card {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+  }
+
+  .file-card header {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.65rem 0.85rem;
+    background: #f3eee4;
+    border-bottom: 1px solid var(--line);
+    font-family: var(--ui);
+    font-size: 0.86rem;
+  }
+
+  .file-card header code {
+    background: transparent;
+    padding: 0;
+    font-size: 0.86rem;
+  }
+
+  .badge {
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-weight: 800;
+    border-radius: 999px;
+    padding: 0.2rem 0.5rem;
+    background: var(--accent-soft);
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  .badge.add { background: var(--ok-soft); color: var(--ok); }
+  .badge.chg { background: var(--warm-soft); color: var(--warm); }
+
+  .file-card .body {
+    padding: 0.85rem 0.95rem 1rem;
+    font-size: 0.95rem;
+  }
+
+  .file-card .body p:first-child { margin-top: 0; }
+  .file-card .body p:last-child { margin-bottom: 0; }
+
+  /* Comparison table */
+  table.compare {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  table.compare th,
+  table.compare td {
+    text-align: left;
+    padding: 0.7rem 0.8rem;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+
+  table.compare th {
+    background: #f3eee4;
+    font-family: var(--ui);
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  table.compare tr:last-child td { border-bottom: 0; }
+
+  /* Interactive bits */
+  details.deep {
+    border: 1px dashed var(--line);
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    background: rgba(255,255,255,0.45);
+    margin: 1.2rem 0;
+  }
+
+  details.deep summary {
+    cursor: pointer;
+    font-family: var(--ui);
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  details.deep[open] summary { margin-bottom: 0.7rem; }
+
+  .stepper {
+    display: grid;
+    gap: 0.7rem;
+  }
+
+  .step {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.8rem;
+    align-items: start;
+  }
+
+  .step .n {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--accent);
+    color: white;
+    font-family: var(--ui);
+    font-weight: 800;
+    font-size: 0.9rem;
+  }
+
+  .step .box {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 0.8rem 0.95rem;
+  }
+
+  .step .box strong {
+    display: block;
+    font-family: var(--ui);
+    margin-bottom: 0.2rem;
+  }
+
+  /* Quiz */
+  .quiz-progress {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: rgba(246, 241, 232, 0.92);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.55rem 0.9rem;
+    margin: 0 0 1.2rem;
+    font-family: var(--ui);
+    font-size: 0.9rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 0.8rem;
+    box-shadow: var(--shadow);
+  }
+
+  .quiz-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.15rem 1.2rem;
+    margin: 1rem 0 1.3rem;
+    box-shadow: var(--shadow);
+  }
+
+  .quiz-card h3 {
+    margin-top: 0;
+    font-size: 1.05rem;
+  }
+
+  .choices {
+    display: grid;
+    gap: 0.55rem;
+    margin-top: 0.8rem;
+  }
+
+  button.choice {
+    text-align: left;
+    border: 1px solid var(--line);
+    background: #fbf8f2;
+    border-radius: 10px;
+    padding: 0.75rem 0.85rem;
+    font: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.05s ease;
+  }
+
+  button.choice:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: #fff;
+  }
+
+  button.choice:active:not(:disabled) { transform: translateY(1px); }
+  button.choice:disabled { cursor: default; opacity: 0.95; }
+
+  button.choice.correct {
+    border-color: var(--ok);
+    background: var(--ok-soft);
+  }
+
+  button.choice.incorrect {
+    border-color: var(--danger);
+    background: var(--danger-soft);
+  }
+
+  button.choice.missed {
+    border-color: #8bbfa0;
+    box-shadow: inset 0 0 0 1px #8bbfa0;
+  }
+
+  .feedback {
+    display: none;
+    margin-top: 0.85rem;
+    padding: 0.8rem 0.9rem;
+    border-radius: 10px;
+    font-size: 0.95rem;
+  }
+
+  .feedback.show { display: block; }
+  .feedback.ok { background: var(--ok-soft); border: 1px solid #9dcea8; }
+  .feedback.bad { background: var(--danger-soft); border: 1px solid #e2b0b0; }
+
+  .reset-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    align-items: center;
+    margin-top: 1rem;
+  }
+
+  button.reset {
+    font-family: var(--ui);
+    border: 0;
+    background: var(--ink);
+    color: white;
+    border-radius: 999px;
+    padding: 0.65rem 1rem;
+    cursor: pointer;
+    font-size: 0.92rem;
+  }
+
+  button.reset:hover { background: #000; }
+
+  footer {
+    margin-top: 3rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 0.92rem;
+  }
+
+  .pill-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin: 0.7rem 0 0.2rem;
+  }
+
+  .pill {
+    font-family: var(--ui);
+    font-size: 0.78rem;
+    border-radius: 999px;
+    padding: 0.22rem 0.6rem;
+    background: #efe8db;
+    color: var(--muted);
+  }
+
+  .pill.on { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+
+  @media (max-width: 640px) {
+    body { font-size: 16.5px; }
+    .wrap { width: min(var(--max), calc(100% - 1.25rem)); }
+    .quiz-progress { border-radius: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <p class="eyebrow">Interactive PR walkthrough · 2026-07-19</p>
+    <h1>Scaffold the inert Bun and TypeScript Pi extension</h1>
+    <p class="lede">
+      A guided tour of
+      <a href="https://github.com/joshbochu/pi-code-tool-ts/pull/2">PR&nbsp;#2</a>
+      on <code>pi-code-tool-ts</code>: the first executable unit of the project.
+      Nothing product-shaped happens yet. That is the point.
+    </p>
+    <div class="meta">
+      <span class="chip"><strong>Repo</strong> joshbochu/pi-code-tool-ts</span>
+      <span class="chip"><strong>Unit</strong> M0.1</span>
+      <span class="chip"><strong>Branch</strong> codex/m0-1-package-scaffold</span>
+      <span class="chip"><strong>Shape</strong> +664 / −18 across 10 files</span>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="Table of contents">
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#background">Background</a> — Pi packages, milestones, and why “inert” matters</li>
+      <li><a href="#intuition">Intuition</a> — the handshake, the smoke test, and a toy walkthrough</li>
+      <li><a href="#code">Code</a> — file-by-file tour of the PR</li>
+      <li><a href="#quiz">Quiz</a> — five checks that you really absorbed it</li>
+    </ol>
+  </nav>
+
+  <!-- ===================== BACKGROUND ===================== -->
+  <section id="background">
+    <h2>Background</h2>
+
+    <p>
+      Before this pull request, <code>pi-code-tool-ts</code> was a design
+      repository: goals, roadmaps, and a meticulous milestone plan, but no
+      package a machine could install or a real Pi process could load. PR&nbsp;#2
+      is the moment the project becomes <em>executable without becoming a
+      product</em>. To see why that distinction is so carefully drawn, it helps
+      to start farther out than the diff.
+    </p>
+
+    <details class="deep">
+      <summary>Deep background for beginners (safe to skip if you already know Pi packages)</summary>
+
+      <h3>What Pi is, in one paragraph</h3>
+      <p>
+        <strong>Pi</strong> is a coding-agent CLI. Like many agent tools, it can
+        be extended: third-party packages register tools, slash commands, event
+        hooks, and other behavior. An extension is not a separate daemon by
+        default. When Pi starts, it discovers packages, loads their TypeScript
+        entrypoints, and calls a factory function inside the Pi process itself.
+      </p>
+
+      <h3>What a Pi package looks like</h3>
+      <p>
+        A Pi package is ordinary npm metadata plus one extra field. In
+        <code>package.json</code> you declare:
+      </p>
+      <pre><code>{
+  "name": "my-extension",
+  "keywords": ["pi-package"],
+  "pi": {
+    "extensions": ["./src/extension.ts"]
+  }
+}</code></pre>
+      <p>
+        Pi reads <code>pi.extensions</code>, loads each module (TypeScript is
+        accepted directly; there is no mandatory compile step), and invokes the
+        module’s <strong>default export</strong>. That default export is a
+        factory: a function that receives an <code>ExtensionAPI</code> object.
+        Through that API, the factory can register tools, commands, and so on.
+      </p>
+
+      <div class="callout def">
+        <div class="label">Definition · Extension factory</div>
+        <p>
+          A function Pi calls at startup with an <code>ExtensionAPI</code>.
+          Anything the factory registers becomes part of that Pi session.
+          Anything it does <em>not</em> register simply does not exist.
+        </p>
+      </div>
+
+      <h3>Why Bun and TypeScript show up here</h3>
+      <p>
+        This repository is intentionally a <strong>Bun-managed TypeScript</strong>
+        package. Bun provides the package manager, test runner, and a convenient
+        way to spawn processes. TypeScript is checked with
+        <code>tsc --noEmit</code> (type-check only; no emitted JavaScript),
+        because Pi loads the <code>.ts</code> sources itself. That combination
+        is the project’s development path for everything that follows.
+      </p>
+
+      <h3>The larger product ambition (not in this PR)</h3>
+      <p>
+        Eventually, <code>pi-code-tool-ts</code> aims to give Pi a TypeScript
+        “code mode”: a durable way for the model to run TypeScript against tools
+        without shipping every intermediate result back through the prompt. That
+        future involves subprocesses, IPC, trust contracts, and a model-facing
+        <code>code</code> tool. <strong>None of that is present in PR&nbsp;#2.</strong>
+        M0.1 only proves that the package can be loaded.
+      </p>
+    </details>
+
+    <h3>Narrow background: the milestone machine</h3>
+    <p>
+      PR&nbsp;#1 established a delivery protocol: work proceeds in small,
+      human-reviewed units with explicit stop gates. The active milestone is
+      <strong>M0 — Foundation</strong>. Inside M0, only unit
+      <strong>M0.1 — Scaffold the package</strong> is authorized.
+    </p>
+
+    <div class="figure">
+      <h4>Milestone strip · where PR #2 sits</h4>
+      <div class="flow">
+        <div class="flow-row cols-3">
+          <div class="node ok">
+            <div class="kicker">Done before this PR</div>
+            <div class="title">PR #1 · workflow docs</div>
+            <div class="detail">Goals, progress ledger, M0 handoff. No runtime.</div>
+          </div>
+          <div class="node accent">
+            <div class="kicker">This PR</div>
+            <div class="title">M0.1 · inert scaffold</div>
+            <div class="detail">Installable, type-checked, testable, loadable by Pi.</div>
+          </div>
+          <div class="node muted">
+            <div class="kicker">Not started</div>
+            <div class="title">M0.2 · trust contract</div>
+            <div class="detail">Explicit opt-in for dangerous execution. Later.</div>
+          </div>
+        </div>
+      </div>
+      <p class="caption">
+        The project treats “Ready for review” as a hard stop. Passing checks do
+        not authorize the next unit; a human does.
+      </p>
+    </div>
+
+    <div class="callout warn">
+      <div class="label">Key constraint · Inert on purpose</div>
+      <p>
+        M0.1 forbids product behavior. The extension factory must register no
+        tools, commands, events, timers, workers, sockets, or subprocesses.
+        A smoke harness may launch Pi as <em>test infrastructure</em>, but the
+        extension itself must remain a no-op.
+      </p>
+    </div>
+
+    <h3>What “proof” means in this unit</h3>
+    <p>
+      The plan distinguishes two layers of evidence:
+    </p>
+    <ul>
+      <li>
+        <strong>Fast checks</strong> — <code>bun run check</code> type-checks
+        and runs unit tests. These never start Pi.
+      </li>
+      <li>
+        <strong>Smoke load</strong> — <code>bun run smoke:pi</code> launches the
+        <em>project-pinned</em> Pi CLI against this package root, speaks a tiny
+        RPC conversation, and also proves that a missing extension path fails.
+      </li>
+    </ul>
+    <p>
+      That second layer exists because unit tests alone cannot prove the real
+      loader path. A green test suite could still leave you with a
+      <code>package.json</code> Pi never reads.
+    </p>
+
+    <div class="figure">
+      <h4>Two verification lanes</h4>
+      <div class="flow-row cols-2">
+        <div class="node">
+          <div class="kicker">Lane A · bun run check</div>
+          <div class="title">Typecheck + unit tests</div>
+          <div class="detail">
+            <code>tsc --noEmit</code>, three factory tests, no Pi process.
+          </div>
+        </div>
+        <div class="node warm">
+          <div class="kicker">Lane B · bun run smoke:pi</div>
+          <div class="title">Real CLI load</div>
+          <div class="detail">
+            Pinned Pi 0.80.10, isolated config dir, RPC <code>get_state</code>,
+            missing-path negative control.
+          </div>
+        </div>
+      </div>
+      <p class="caption">
+        Separating the lanes keeps everyday tests fast and free of credentials,
+        while still requiring a real loader proof before human review.
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================== INTUITION ===================== -->
+  <section id="intuition">
+    <h2>Intuition</h2>
+
+    <p>
+      The essence of PR&nbsp;#2 is a <strong>handshake with an empty hand</strong>.
+      Pi must be able to find the package, load the factory, call it, and
+      continue. The factory must accept the call and do nothing. Everything else
+      in the PR exists to make that claim checkable.
+    </p>
+
+    <h3>A toy story with concrete data</h3>
+    <p>
+      Imagine Pi as a concierge who, at opening time, walks a list of vendor
+      booths. For each booth, the concierge reads a sign on the door
+      (<code>pi.extensions</code>), opens the door (loads the module), and says:
+      “Here is the building API—hang your tools if you like.”
+    </p>
+    <p>
+      Most future booths will hang wrenches and registers. The M0.1 booth hangs
+      nothing. It still must open. If the door is locked, or the concierge never
+      visits, later work is fantasy.
+    </p>
+
+    <div class="figure">
+      <h4>Diagram family A · the load handshake</h4>
+      <div class="flow">
+        <div class="node accent">
+          <div class="kicker">1 · Discover</div>
+          <div class="title">Read package.json</div>
+          <div class="detail">
+            Toy data:
+            <code>"pi": { "extensions": ["./src/extension.ts"] }</code>
+          </div>
+        </div>
+        <div class="arrow"><span class="line"></span> loads TypeScript module <span class="line"></span></div>
+        <div class="node">
+          <div class="kicker">2 · Import</div>
+          <div class="title">src/extension.ts</div>
+          <div class="detail">
+            Default export:
+            <code>function piCodeToolTsExtension(_pi) { return undefined }</code>
+          </div>
+        </div>
+        <div class="arrow"><span class="line"></span> call factory(api) <span class="line"></span></div>
+        <div class="node ok">
+          <div class="kicker">3 · Handshake complete</div>
+          <div class="title">No registrations</div>
+          <div class="detail">
+            Return value <code>undefined</code>. No tools, no commands, no side effects.
+          </div>
+        </div>
+      </div>
+      <p class="caption">
+        Success is not “something interesting happened.” Success is “Pi got
+        through the door and the booth stayed empty.”
+      </p>
+    </div>
+
+    <h3>Why a hostile Proxy appears in the unit tests</h3>
+    <p>
+      Saying “we do not use the API” is easy in a code review and easy to break
+      later with a casual <code>pi.registerTool(...)</code>. The unit test passes
+      a <strong>Proxy</strong> that throws on any property access. If the factory
+      so much as reads a field, the test explodes.
+    </p>
+
+    <div class="figure">
+      <h4>Diagram family B · hostile API as a tripwire</h4>
+      <div class="flow-row cols-2">
+        <div class="node danger">
+          <div class="kicker">Toy API object</div>
+          <div class="title">Proxy traps every get</div>
+          <div class="detail">
+            <code>get() { throw new Error("forbidden") }</code>
+          </div>
+        </div>
+        <div class="node ok">
+          <div class="kicker">Factory under test</div>
+          <div class="title">Never touches the argument</div>
+          <div class="detail">
+            Parameter named <code>_pi</code>, body returns <code>undefined</code>.
+            Test passes.
+          </div>
+        </div>
+      </div>
+      <p class="caption">
+        This is not a mock of Pi’s real API surface. It is a mousetrap: any
+        accidental contact snaps shut.
+      </p>
+    </div>
+
+    <h3>Why the smoke test needs a positive and a negative path</h3>
+    <p>
+      Consider a broken smoke script that launches Pi with flags so gentle that
+      Pi exits zero without ever loading your package. Green output, empty
+      proof. PR&nbsp;#2 guards against that in two ways:
+    </p>
+    <ol>
+      <li>
+        <strong>Positive path</strong> — load the package root (<code>-e .</code>),
+        send an RPC request
+        <code>{"id":"m0.1-smoke","type":"get_state"}</code>, and require a
+        matching successful response line on stdout.
+      </li>
+      <li>
+        <strong>Negative path</strong> — point Pi at a deliberately missing file
+        <code>./src/__m0_1_missing_extension__.ts</code> and require a
+        <em>non-zero</em> exit. If even garbage paths “succeed,” the harness is
+        lying.
+      </li>
+    </ol>
+
+    <div class="figure">
+      <h4>Diagram family A, reused · smoke conversation with toy RPC</h4>
+      <div class="flow">
+        <div class="flow-row cols-2">
+          <div class="node warm">
+            <div class="kicker">Harness</div>
+            <div class="title">scripts/smoke-pi.ts</div>
+            <div class="detail">Spawns pinned <code>node_modules/.bin/pi</code></div>
+          </div>
+          <div class="node accent">
+            <div class="kicker">Pi child</div>
+            <div class="title">offline · rpc · no-session</div>
+            <div class="detail">
+              Env includes isolated
+              <code>PI_CODING_AGENT_DIR=/tmp/pi-code-tool-ts-smoke-…</code>
+            </div>
+          </div>
+        </div>
+        <div class="arrow"><span class="line"></span> stdin JSONL request <span class="line"></span></div>
+        <pre class="code" style="margin:0; white-space: pre-wrap;">{"id":"m0.1-smoke","type":"get_state"}</pre>
+        <div class="arrow"><span class="line"></span> stdout JSONL response (toy shape) <span class="line"></span></div>
+        <pre class="code" style="margin:0; white-space: pre-wrap;">{"type":"response","id":"m0.1-smoke","command":"get_state","success":true, ...}</pre>
+        <div class="node ok">
+          <div class="kicker">Assertion</div>
+          <div class="title">findSmokeResponse(stdout)</div>
+          <div class="detail">
+            Match id, command, type=<code>response</code>, success=<code>true</code>.
+            Exit code must also be 0.
+          </div>
+        </div>
+      </div>
+      <p class="caption">
+        The harness does not care about the full state payload. It cares that a
+        real RPC round-trip occurred after a real package load.
+      </p>
+    </div>
+
+    <div class="figure">
+      <h4>Mini-terminal · what success looks like</h4>
+      <div class="terminal">
+        <div class="bar">
+          <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+          <span>local · bun run smoke:pi</span>
+        </div>
+        <div class="body"><span class="prompt">$</span> bun run smoke:pi
+<span class="ok">Pi 0.80.10 loaded the package manifest and answered RPC; the missing-extension control failed as expected.</span>
+
+<span class="dim"># under the hood, roughly:</span>
+<span class="dim"># 1) pi --version                          → 0.80.10</span>
+<span class="dim"># 2) pi -e . --mode rpc … + get_state      → exit 0 + response</span>
+<span class="dim"># 3) pi -e ./src/__m0_1_missing…           → exit ≠ 0</span></div>
+      </div>
+      <p class="caption">
+        One cheerful line on the outside; three obligations on the inside.
+      </p>
+    </div>
+
+    <h3>Isolation in one picture</h3>
+    <p>
+      The smoke environment is intentionally stingy. It sets
+      <code>PI_CODING_AGENT_DIR</code> to a fresh temp directory,
+      <code>PI_OFFLINE=1</code>, and <code>PI_TELEMETRY=0</code>, then copies
+      only a short allowlist of host variables (<code>PATH</code>,
+      <code>HOME</code>, locale, and a few Windows process basics). The user’s
+      models, credentials, and extension soup stay out of the proof.
+    </p>
+
+    <div class="callout def">
+      <div class="label">Intuition pump</div>
+      <p>
+        Think of M0.1 as testing the electrical outlet in an empty room before
+        you buy furniture. You plug in a lamp tester (the smoke harness), confirm
+        power (Pi loads the package), confirm the tester is not broken (negative
+        control), then unplug everything and leave the room bare (inert factory).
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================== CODE ===================== -->
+  <section id="code">
+    <h2>Code</h2>
+
+    <p>
+      The PR lands as three commits on
+      <code>codex/m0-1-package-scaffold</code>: the scaffold itself, a hardening
+      pass on the smoke check, and a small clarity polish that typechecks the
+      smoke script and hoists RPC constants. Below we tour the final tree, not
+      the commit archaeology.
+    </p>
+
+    <div class="pill-row">
+      <span class="pill on">package manifest</span>
+      <span class="pill on">extension factory</span>
+      <span class="pill on">unit tests</span>
+      <span class="pill on">smoke harness</span>
+      <span class="pill on">docs / ledger</span>
+    </div>
+
+    <h3>1. Package identity and scripts</h3>
+    <p>
+      <code>package.json</code> is the contract Pi and Bun both read. Notice what
+      is present and what is deliberately absent.
+    </p>
+    <pre><code>{
+  "name": "pi-code-tool-ts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "keywords": ["pi-package"],
+  "pi": {
+    "extensions": ["./src/extension.ts"]
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "check": "bun run typecheck && bun test",
+    "smoke:pi": "bun scripts/smoke-pi.ts"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "0.80.10",
+    "@types/bun": "^1.3.14",
+    "typescript": "^5.8.3"
+  }
+}</code></pre>
+
+    <div class="diff-grid two">
+      <article class="file-card">
+        <header>
+          <code>pi.extensions</code>
+          <span class="badge add">discovery</span>
+        </header>
+        <div class="body">
+          <p>
+            Points at source, not dist. Pi loads TypeScript directly. No build
+            step is part of the runtime story.
+          </p>
+        </div>
+      </article>
+      <article class="file-card">
+        <header>
+          <code>dependencies</code>
+          <span class="badge">absent</span>
+        </header>
+        <div class="body">
+          <p>
+            Runtime dependency set is empty. Pi itself is a peer (broad
+            <code>"*"</code>) and a pinned devDependency (exact
+            <code>0.80.10</code>) for reproducible smoke runs.
+          </p>
+        </div>
+      </article>
+    </div>
+
+    <h3>2. Strict TypeScript without emit</h3>
+    <p>
+      <code>tsconfig.json</code> turns the typechecker into a gate, not a
+      compiler. <code>noEmit: true</code> keeps the tree free of generated
+      JavaScript. The include list covers product code, tests, and—after the
+      polish commit—the smoke script:
+    </p>
+    <pre><code>{
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "moduleResolution": "bundler",
+    "verbatimModuleSyntax": true,
+    "noUncheckedIndexedAccess": true,
+    "types": ["bun-types"]
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts", "scripts/**/*.ts"]
+}</code></pre>
+
+    <div class="callout ok">
+      <div class="label">Why scripts joined include</div>
+      <p>
+        Without <code>scripts/**/*.ts</code>, <code>bun run typecheck</code>
+        could stay green while <code>smoke-pi.ts</code> drifted into type errors.
+        The smoke harness is not product runtime, but it is mandatory evidence.
+        Typechecking it closes a blind spot.
+      </p>
+    </div>
+
+    <h3>3. The inert factory</h3>
+    <p>
+      The entire product surface of M0.1 fits in a handful of lines:
+    </p>
+    <pre><code>import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+
+/**
+ * M0.1 inert Pi extension factory.
+ * Proves the package can load. Registers nothing and starts nothing.
+ */
+export default function piCodeToolTsExtension(_pi: ExtensionAPI): undefined {
+  return undefined;
+}</code></pre>
+
+    <ul>
+      <li><code>import type</code> keeps the Pi import eraseable—no runtime require of Pi from the factory module’s value space beyond types.</li>
+      <li>The parameter is named <code>_pi</code> to signal intentional non-use.</li>
+      <li>The return type is literally <code>undefined</code>, matching “no extension instance object.”</li>
+    </ul>
+
+    <h3>4. Unit tests as behavioral fences</h3>
+    <pre><code>test("default export is a function", () => {
+  expect(typeof extension).toBe("function");
+});
+
+test("returns undefined without throwing", () => {
+  expect(extension({} as never)).toBeUndefined();
+});
+
+test("does not touch the Pi API (hostile Proxy)", () => {
+  const hostile = new Proxy({}, {
+    get() { throw new Error("API property access is forbidden in M0.1"); },
+  });
+  expect(extension(hostile as never)).toBeUndefined();
+});</code></pre>
+    <p>
+      Three claims, three fences: export shape, pure call, zero API contact.
+      Together they encode the inertness rule in a form CI can fail loudly.
+    </p>
+
+    <h3>5. The smoke harness, in layers</h3>
+    <p>
+      <code>scripts/smoke-pi.ts</code> is the longest file in the PR, but it has
+      a calm structure. Read it top-down as four layers.
+    </p>
+
+    <div class="stepper">
+      <div class="step">
+        <div class="n">1</div>
+        <div class="box">
+          <strong>Constants and types</strong>
+          Shared RPC vocabulary lives once:
+          <code>SMOKE_RPC_ID = "m0.1-smoke"</code>,
+          <code>SMOKE_RPC_COMMAND = "get_state"</code>,
+          <code>SMOKE_RPC_RESPONSE_TYPE = "response"</code>,
+          and the missing path
+          <code>./src/__m0_1_missing_extension__.ts</code>.
+          A small <code>SmokeRpcRequest</code> object is JSON-stringified later
+          so the request and the matcher cannot drift apart.
+        </div>
+      </div>
+      <div class="step">
+        <div class="n">2</div>
+        <div class="box">
+          <strong>Isolated environment</strong>
+          <code>createSmokeEnvironment(agentDir)</code> builds a minimal
+          <code>env</code> for the child. Fresh
+          <code>PI_CODING_AGENT_DIR</code>, offline and telemetry flags, then a
+          careful allowlist from the parent process.
+        </div>
+      </div>
+      <div class="step">
+        <div class="n">3</div>
+        <div class="box">
+          <strong>Process spawn helper</strong>
+          <code>runPi(extensionSource, agentDir, rpcInput)</code> always uses
+          the project-local binary under <code>node_modules/.bin</code>, with
+          <code>--offline --no-extensions -e &lt;source&gt; --mode rpc --no-session</code>.
+          Stdin carries the optional RPC line; stdout/stderr are captured in full.
+        </div>
+      </div>
+      <div class="step">
+        <div class="n">4</div>
+        <div class="box">
+          <strong>Main sequence</strong>
+          Resolve version → positive package-root load with RPC match →
+          negative missing-path load must fail → print one success line →
+          always delete the temp agent dir in <code>finally</code>.
+        </div>
+      </div>
+    </div>
+
+    <div class="figure">
+      <h4>Positive vs negative control</h4>
+      <div class="flow-row cols-2">
+        <div class="node ok">
+          <div class="kicker">Valid</div>
+          <div class="title"><code>-e .</code></div>
+          <div class="detail">
+            Package root → manifest → factory. Expect exit 0 and
+            <code>get_state</code> success for id <code>m0.1-smoke</code>.
+          </div>
+        </div>
+        <div class="node danger">
+          <div class="kicker">Invalid</div>
+          <div class="title"><code>-e ./src/__m0_1_missing_extension__.ts</code></div>
+          <div class="detail">
+            File does not exist. Expect exit ≠ 0. If this path “works,” the
+            harness cannot be trusted.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3>6. Documentation and the progress ledger</h3>
+    <p>
+      Executable proof is not enough for this project’s process. The PR also:
+    </p>
+    <ul>
+      <li>Adds <code>docs/learning/M0.1-package-scaffold.md</code> with the eight-part learning-note contract (problem, mental model, code tour, protocol, try-it, tests, tradeoffs, review questions).</li>
+      <li>Updates <code>docs/milestones/M0_FOUNDATION.md</code> so the handoff matches the hardened smoke design (pinned Pi, isolated config, negative control).</li>
+      <li>Moves <code>PROJECT_PROGRESS.md</code> to <code>Ready for review</code>, records verification commands, and forbids starting M0.2.</li>
+      <li>Rewrites the README status line so newcomers do not think the repo is still design-only—or, conversely, that product behavior already exists.</li>
+    </ul>
+
+    <div class="callout warn">
+      <div class="label">Process detail worth noticing</div>
+      <p>
+        The evidence log correctly refuses to self-accept the unit. Status is
+        <code>Ready for review</code>, not <code>Accepted</code>. Implementers
+        may not mark their own work accepted; that is a human gate.
+      </p>
+    </div>
+
+    <h3>7. File map of the final PR</h3>
+    <table class="compare">
+      <thead>
+        <tr>
+          <th>File</th>
+          <th>Role</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>package.json</code></td>
+          <td>Package identity, <code>pi.extensions</code>, scripts, peer/dev deps.</td>
+        </tr>
+        <tr>
+          <td><code>tsconfig.json</code></td>
+          <td>Strict no-emit typechecking over src, test, and scripts.</td>
+        </tr>
+        <tr>
+          <td><code>src/extension.ts</code></td>
+          <td>Inert default-export factory.</td>
+        </tr>
+        <tr>
+          <td><code>test/extension.test.ts</code></td>
+          <td>Export shape + hostile Proxy inertness tests.</td>
+        </tr>
+        <tr>
+          <td><code>scripts/smoke-pi.ts</code></td>
+          <td>Pinned-Pi RPC smoke with positive and negative controls.</td>
+        </tr>
+        <tr>
+          <td><code>bun.lock</code></td>
+          <td>Locked Bun install of development tooling only.</td>
+        </tr>
+        <tr>
+          <td><code>docs/learning/M0.1-package-scaffold.md</code></td>
+          <td>Learning note and review questions.</td>
+        </tr>
+        <tr>
+          <td><code>docs/milestones/M0_FOUNDATION.md</code></td>
+          <td>Handoff text aligned with actual smoke design.</td>
+        </tr>
+        <tr>
+          <td><code>PROJECT_PROGRESS.md</code> / <code>README.md</code></td>
+          <td>Ledger status and public status sentence.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>What this PR intentionally does not contain</h3>
+    <ul>
+      <li>No model-facing <code>code</code> tool.</li>
+      <li>No Bun subprocess runtime, Worker, or IPC channel in product code.</li>
+      <li>No TypeScript evaluation of model-written programs.</li>
+      <li>No trust/opt-in contract (that is M0.2).</li>
+      <li>No proof of <code>pi install</code> from a registry—only explicit package-root loading via <code>-e .</code>.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== QUIZ ===================== -->
+  <section id="quiz">
+    <h2>Quiz</h2>
+    <p>
+      Five medium questions. They are meant to be answerable from the substance
+      of the PR, not from trivia about unrelated files. Click an answer to lock
+      it in; you will get immediate feedback.
+    </p>
+
+    <div class="quiz-progress" id="quiz-progress" aria-live="polite">
+      <span>Score: <strong id="score">0</strong> / <strong id="total">5</strong></span>
+      <span id="progress-label">0 answered</span>
+    </div>
+
+    <div id="quiz-root"></div>
+
+    <div class="reset-row">
+      <button class="reset" type="button" id="reset-quiz">Reset quiz</button>
+      <span class="chip" id="quiz-summary">No answers yet.</span>
+    </div>
+  </section>
+
+  <footer>
+    Generated as a self-contained explainer for
+    <a href="https://github.com/joshbochu/pi-code-tool-ts/pull/2">PR #2</a>
+    of <code>pi-code-tool-ts</code>. Local path:
+    <code>/tmp/2026-07-19-explanation-pi-code-tool-ts-pr2-m0-1-scaffold.html</code>
+  </footer>
+</div>
+
+<script>
+const questions = [
+  {
+    id: "q1",
+    prompt: "How does Pi discover this package’s extension entrypoint in M0.1?",
+    choices: [
+      {
+        text: "It scans every .ts file under src/ for a function named activate.",
+        correct: false,
+        feedback: "No directory crawl of that kind is part of the design. Discovery is declarative."
+      },
+      {
+        text: "It reads package.json → pi.extensions, which lists ./src/extension.ts, then loads that module’s default export.",
+        correct: true,
+        feedback: "Exactly. The manifest points at the TypeScript source; Pi loads it and calls the default-export factory."
+      },
+      {
+        text: "It requires a compiled dist/extension.js listed in the main field.",
+        correct: false,
+        feedback: "M0.1 deliberately has no emit/build step. Pi loads the TypeScript entry from pi.extensions."
+      },
+      {
+        text: "It only loads packages that register themselves during bun test.",
+        correct: false,
+        feedback: "Unit tests never start Pi. Discovery happens in the real CLI load path, proven by smoke:pi."
+      }
+    ]
+  },
+  {
+    id: "q2",
+    prompt: "Why is the extension factory allowed to run inside the Pi process in M0.1 without creating the project’s long-term trust boundary for model-generated code?",
+    choices: [
+      {
+        text: "Because the factory is inert: it registers no tools and starts no runtime that would execute model-written TypeScript.",
+        correct: true,
+        feedback: "Correct. In-process load is normal for Pi extensions. The dangerous future boundary is executing untrusted code—not merely loading an empty factory."
+      },
+      {
+        text: "Because Pi automatically sandboxes every extension in a disposable VM.",
+        correct: false,
+        feedback: "That is not what this PR relies on. The factory runs in-process; safety here comes from doing nothing, not from a VM."
+      },
+      {
+        text: "Because smoke-pi runs with root privileges and intercepts all system calls.",
+        correct: false,
+        feedback: "The smoke harness is ordinary process spawning with an isolated config directory. It is not a syscall sandbox."
+      },
+      {
+        text: "Because peerDependencies with \"*\" force Pi to reject any registration calls.",
+        correct: false,
+        feedback: "Peer dependency ranges affect package installation/compatibility, not runtime interception of ExtensionAPI calls."
+      }
+    ]
+  },
+  {
+    id: "q3",
+    prompt: "What failure mode is the missing-extension negative control specifically designed to catch?",
+    choices: [
+      {
+        text: "A lockfile that drifts from package.json during bun install.",
+        correct: false,
+        feedback: "Useful concern, but that is handled by frozen installs—not by the missing-path probe."
+      },
+      {
+        text: "A smoke harness that exits successfully without actually exercising a failing load path—i.e., false confidence that “Pi started” means “loader proof works.”",
+        correct: true,
+        feedback: "Yes. If even a nonsense extension path exits 0, a green smoke run may not be proving loader behavior at all."
+      },
+      {
+        text: "A unit test that accidentally imports bun:test in the extension factory.",
+        correct: false,
+        feedback: "The hostile Proxy and export-shape tests cover factory behavior. The negative control is about the CLI harness."
+      },
+      {
+        text: "A README that still claims the repo is design-only.",
+        correct: false,
+        feedback: "Docs matter for humans, but the negative control is an automated loader assertion."
+      }
+    ]
+  },
+  {
+    id: "q4",
+    prompt: "After M0.1, which statement best describes the intended state of product behavior?",
+    choices: [
+      {
+        text: "A no-op code tool is registered so the model can call it, but it returns a fixed string.",
+        correct: false,
+        feedback: "Even a no-op tool would be product surface. M0.1 registers nothing."
+      },
+      {
+        text: "The package is installable/loadable and checked, but the factory still registers no tools, commands, runtime, or execution path.",
+        correct: true,
+        feedback: "That is the whole unit: prove the skeleton without introducing behavior that later units must carefully design."
+      },
+      {
+        text: "A Bun subprocess is already running and waiting for IPC, but tools are gated behind a flag.",
+        correct: false,
+        feedback: "Subprocess/IPC runtime is explicitly out of scope until later milestones."
+      },
+      {
+        text: "Trusted execution is enabled by default so later milestones can focus on features.",
+        correct: false,
+        feedback: "Trusted-execution opt-in is M0.2, and it is not started here—default-on would be the opposite of the plan."
+      }
+    ]
+  },
+  {
+    id: "q5",
+    prompt: "Why keep bun run check and bun run smoke:pi as separate scripts instead of folding the Pi launch into the default unit-test command?",
+    choices: [
+      {
+        text: "Because tsc cannot typecheck files that spawn processes.",
+        correct: false,
+        feedback: "TypeScript can typecheck spawn code just fine—especially now that scripts/ is included."
+      },
+      {
+        text: "Because the smoke path uses the project-pinned Pi CLI and an isolated config, and the project does not want ordinary unit tests to silently depend on starting Pi.",
+        correct: true,
+        feedback: "Right. Fast tests stay pure and local; the heavier, loader-proving smoke remains mandatory evidence but separate."
+      },
+      {
+        text: "Because GitHub disallows more than one npm script in private packages.",
+        correct: false,
+        feedback: "No such restriction is involved."
+      },
+      {
+        text: "Because smoke:pi mutates main and therefore cannot run in CI-like workflows.",
+        correct: false,
+        feedback: "The smoke uses a temp PI_CODING_AGENT_DIR and does not rewrite project source. Separation is about dependency and intent, not branch mutation."
+      }
+    ]
+  }
+];
+
+const state = {
+  answered: {},
+  correctCount: 0
+};
+
+const root = document.getElementById("quiz-root");
+const scoreEl = document.getElementById("score");
+const totalEl = document.getElementById("total");
+const progressLabel = document.getElementById("progress-label");
+const summaryEl = document.getElementById("quiz-summary");
+
+totalEl.textContent = String(questions.length);
+
+function render() {
+  root.innerHTML = "";
+  questions.forEach((q, index) => {
+    const card = document.createElement("article");
+    card.className = "quiz-card";
+    card.id = q.id;
+
+    const h = document.createElement("h3");
+    h.textContent = `${index + 1}. ${q.prompt}`;
+    card.appendChild(h);
+
+    const choices = document.createElement("div");
+    choices.className = "choices";
+
+    const answered = state.answered[q.id];
+
+    q.choices.forEach((choice, choiceIndex) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "choice";
+      btn.textContent = choice.text;
+
+      if (answered) {
+        btn.disabled = true;
+        if (choiceIndex === answered.choiceIndex) {
+          btn.classList.add(choice.correct ? "correct" : "incorrect");
+        } else if (choice.correct) {
+          btn.classList.add("missed");
+        }
+      } else {
+        btn.addEventListener("click", () => answer(q.id, choiceIndex));
+      }
+
+      choices.appendChild(btn);
+    });
+
+    card.appendChild(choices);
+
+    const feedback = document.createElement("div");
+    feedback.className = "feedback";
+    if (answered) {
+      const choice = q.choices[answered.choiceIndex];
+      feedback.classList.add("show", choice.correct ? "ok" : "bad");
+      feedback.innerHTML = `<strong>${choice.correct ? "Correct." : "Not quite."}</strong> ${choice.feedback}`;
+    }
+    card.appendChild(feedback);
+
+    root.appendChild(card);
+  });
+
+  const answeredCount = Object.keys(state.answered).length;
+  scoreEl.textContent = String(state.correctCount);
+  progressLabel.textContent = `${answeredCount} answered`;
+
+  if (answeredCount === 0) {
+    summaryEl.textContent = "No answers yet.";
+  } else if (answeredCount < questions.length) {
+    summaryEl.textContent = `${answeredCount} of ${questions.length} locked in.`;
+  } else if (state.correctCount === questions.length) {
+    summaryEl.textContent = "Perfect score — M0.1 mental model looks solid.";
+  } else {
+    summaryEl.textContent = `Finished: ${state.correctCount}/${questions.length}. Re-read any red cards, then reset if you want another pass.`;
+  }
+}
+
+function answer(questionId, choiceIndex) {
+  if (state.answered[questionId]) return;
+  const q = questions.find((item) => item.id === questionId);
+  const choice = q.choices[choiceIndex];
+  state.answered[questionId] = { choiceIndex, correct: choice.correct };
+  if (choice.correct) state.correctCount += 1;
+  render();
+  document.getElementById(questionId)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+document.getElementById("reset-quiz").addEventListener("click", () => {
+  state.answered = {};
+  state.correctCount = 0;
+  render();
+  document.getElementById("quiz").scrollIntoView({ behavior: "smooth" });
+});
+
+render();
+</script>
+</body>
+</html>
