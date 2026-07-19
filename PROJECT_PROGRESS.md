@@ -60,7 +60,7 @@ An implementer must never mark its own unit `Accepted`. Passing automated checks
 
 | Milestone | Outcome | Units | Accepted | Status | Plan |
 |---|---|---:|---:|---|---|
-| M0 | Loadable extension skeleton and executable V0 specification | 3 | 0 | `Ready` | [M0 plan](./docs/milestones/M0_FOUNDATION.md) |
+| M0 | Loadable extension skeleton and executable V0 specification | 3 | 0 | `In progress` | [M0 plan](./docs/milestones/M0_FOUNDATION.md) |
 | M1 | Reliable persistent Bun subprocess and versioned IPC | 6 | 0 | `Not started` | Create after M0 is accepted |
 | M2 | Persistent TypeScript notebook semantics | 7 | 0 | `Not started` | Create after M1 is accepted |
 | M3 | Pi tools callable from TypeScript | 8 | 0 | `Not started` | Create after M2 is accepted |
@@ -94,7 +94,7 @@ Add one row when a unit moves to `Ready for review`, then amend the same row aft
 
 | Date | Unit | State | Commit | Verification | Human reviewer | Notes |
 |---|---|---|---|---|---|---|
-| 2026-07-19 | M0.1 | Ready for review | — | `bun install --frozen-lockfile` exit 0; `bun run typecheck` exit 0; `bun test` 3 pass; `bun run check` exit 0; `bun run smoke:pi` exit 0 (`pi --offline --no-extensions -e ./src/extension.ts --list-models`). Bun 1.3.11; Pi 0.80.6; `@earendil-works/pi-coding-agent` 0.80.10 (dev/peer). | — | Scaffold only; inert factory; stop for human review. |
+| 2026-07-19 | M0.1 | Ready for review | — | `bun install --frozen-lockfile` exit 0; `bun run typecheck` exit 0; `bun test` 3 pass; `bun run check` exit 0; `bun run smoke:pi` exit 0 (project-pinned Pi 0.80.10 loaded package root, answered RPC, and rejected a missing-extension control). Bun 1.3.11; host Pi 0.80.6 was recorded but is not the smoke runtime. | — | Scaffold only; inert factory; stop for human review. |
 
 ## Update protocol
 
