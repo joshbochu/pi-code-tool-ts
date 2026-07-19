@@ -50,10 +50,10 @@ An implementer must never mark its own unit `Accepted`. Passing automated checks
 | Delivery phase | V0 |
 | Active milestone | M0 — Foundation and executable specification |
 | Active unit | M0.1 — Scaffold the package |
-| Unit status | `Ready` |
+| Unit status | `Ready for review` |
 | Accepted V0 units | 0 / 35 |
 | Last accepted unit | None |
-| Next permitted work | M0.1 only |
+| Next permitted work | Human review of M0.1; do not begin M0.2 |
 | Stop point | Human review after M0.1; do not begin M0.2 |
 
 ## V0 milestone summary
@@ -71,7 +71,7 @@ An implementer must never mark its own unit `Accepted`. Passing automated checks
 
 | Unit | Behavioral outcome | Status | Implementation commit | Learning note | Review evidence |
 |---|---|---|---|---|---|
-| M0.1 | Pi can load a deliberately inert Bun/TypeScript package skeleton and its checks run | `Ready` | — | Planned: `docs/learning/M0.1-package-scaffold.md` | — |
+| M0.1 | Pi can load a deliberately inert Bun/TypeScript package skeleton and its checks run | `Ready for review` | — | `docs/learning/M0.1-package-scaffold.md` | See evidence log |
 | M0.2 | Trusted execution requires explicit opt-in and communicates shell-equivalent authority | `Not started` | — | Planned: `docs/learning/M0.2-trust-contract.md` | — |
 | M0.3 | Executable fixtures define implemented and pending V0 behavior | `Not started` | — | Planned: `docs/learning/M0.3-acceptance-fixtures.md` | — |
 
@@ -94,7 +94,7 @@ Add one row when a unit moves to `Ready for review`, then amend the same row aft
 
 | Date | Unit | State | Commit | Verification | Human reviewer | Notes |
 |---|---|---|---|---|---|---|
-| — | — | — | — | — | — | No implementation units completed yet. |
+| 2026-07-19 | M0.1 | Ready for review | — | `bun install --frozen-lockfile` exit 0; `bun run typecheck` exit 0; `bun test` 3 pass; `bun run check` exit 0; `bun run smoke:pi` exit 0 (`pi --offline --no-extensions -e ./src/extension.ts --list-models`). Bun 1.3.11; Pi 0.80.6; `@earendil-works/pi-coding-agent` 0.80.10 (dev/peer). | — | Scaffold only; inert factory; stop for human review. |
 
 ## Update protocol
 
