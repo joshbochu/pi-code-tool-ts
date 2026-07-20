@@ -1,7 +1,7 @@
 # M0 — Foundation and Executable Specification
 
 - Status: `In progress`
-- Active unit: M0.1 only
+- Active unit: M0.2 only
 - Canonical sequence: [PROJECT_GOALS.md](../../PROJECT_GOALS.md#milestone-plan)
 - Progress ledger: [PROJECT_PROGRESS.md](../../PROJECT_PROGRESS.md)
 - Last updated: 2026-07-19
@@ -67,7 +67,7 @@ If a proposed M0 change needs any excluded mechanism, stop and move that work to
 | M0.2 | Explicit trusted-execution opt-in contract | M0.1 is accepted | Enabled/disabled contract tests pass | Human reviews before M0.3 |
 | M0.3 | Executable V0 acceptance fixtures | M0.2 is accepted | Implemented vs pending behavior is unambiguous | Human accepts M0 before M1 planning |
 
-Only M0.1 is authorized by this handoff.
+M0.1 is accepted. M0.2 is the only active implementation unit.
 
 ---
 
@@ -341,14 +341,118 @@ Run and report every verification command. Mark each invariant PASS, FAIL, or BL
 
 ---
 
-# Later M0 Units — Planning Preview Only
+# M0.2 Implementer Handoff — Define the V0 Trust Contract
 
-## M0.2 — Define the V0 trust contract
+## Behavioral outcome
 
-Planned outcome: configuration requires explicit trusted-execution opt-in and presents shell-equivalent authority honestly. It must not execute code yet. Its detailed invariant plan will be written only after M0.1 is accepted and its lessons are incorporated.
+Add one explicit, disabled-by-default opt-in for future trusted code execution
+and present its shell-equivalent authority honestly. This unit defines informed
+consent only. It must not register a `code` tool or execute generated code.
+
+## Accepted design
+
+- Opt-in surface: Pi boolean flag `--allow-trusted-code`.
+- Default: `false`.
+- Disabled behavior: no warning, tool, runtime, or other execution behavior.
+- Enabled behavior: warn at `session_start` that model-written TypeScript has
+  shell-equivalent authority and that a subprocess is not a sandbox.
+- Scope: flag registration, warning, tests, smoke evidence, learning note, and
+  progress updates only.
+
+The warning must name the material ambient powers: files, environment and
+credentials, network, and process spawning. It must also say that M0.2 does not
+execute code yet so the current behavior cannot be confused with a runtime.
+
+## Required tests
+
+Tests must prove:
+
+1. The flag is boolean and defaults to `false`.
+2. Its description names unrestricted-shell authority.
+3. The disabled session path emits no warning and does not register a tool.
+4. The enabled session path emits the exact warning at warning severity.
+5. A narrow Proxy rejects any unexpected Pi API access.
+6. The project-pinned Pi smoke probe observes both disabled and enabled paths.
+
+Do not add a broad fake Pi runtime. The test harness should expose only
+`registerFlag`, `getFlag`, and `on`; any other property access is a failure.
+
+## M0.2 invariants
+
+| ID | Invariant | Evidence |
+|---|---|---|
+| M0.2-I1 | Pi exposes `--allow-trusted-code` as a boolean defaulting to `false`. | Exact flag-registration test |
+| M0.2-I2 | The CLI description says trusted execution has unrestricted-shell authority. | Description assertion |
+| M0.2-I3 | The disabled session path is silent and registers no model-facing tool. | Proxy access log and notification assertion |
+| M0.2-I4 | The enabled path warns about shell-equivalent authority, ambient powers, and lack of sandboxing. | Exact notification and semantic assertions |
+| M0.2-I5 | Enabling the flag still starts no runtime and exposes no `code` tool. | Source/diff review and Proxy harness |
+| M0.2-I6 | Project-pinned Pi exhibits the disabled and enabled contracts in an isolated offline session. | `bun run smoke:pi` |
+| M0.2-I7 | Strict type-checking and all Bun tests pass. | `bun run typecheck`, `bun test`, `bun run check` |
+| M0.2-I8 | The learning note satisfies the eight-part contract and distinguishes consent from isolation. | Learning-note review |
+| M0.2-I9 | No third-party source is copied and no runtime dependency is added. | Diff and manifest review |
+| M0.2-I10 | Progress ends at `Ready for review`; M0.3 remains unstarted. | `PROJECT_PROGRESS.md` |
+
+## Verification commands
+
+Run from the repository root:
+
+```sh
+bun --version
+pi --version
+bun install --frozen-lockfile
+bun run typecheck
+bun test
+bun run check
+bun run smoke:pi
+git diff --check
+git status --short
+git diff --stat
+```
+
+Inspect the complete diff for any `registerTool`, process, Worker, IPC, network,
+filesystem, or evaluator work. Any such product behavior is out of scope.
+
+## Learning-note requirements
+
+Create `docs/learning/M0.2-trust-contract.md` with exactly the eight standard
+sections. It must explain:
+
+- how Pi parses and exposes the flag;
+- why exact boolean `true` is required;
+- when and where the warning appears;
+- why opt-in is not a sandbox;
+- why absence of a `code` tool is the disabled contract in M0.2; and
+- what remains for M0.3 and later runtime milestones.
+
+## Completion state
+
+After all evidence passes:
+
+- mark M0.1 `Accepted` only because the human explicitly authorized M0.2;
+- mark M0.2 `Ready for review`;
+- record the implementation and smoke evidence without inventing a commit hash;
+- leave M0.3 `Not started`; and
+- stop for human review.
+
+## Human acceptance checklist
+
+- [ ] The flag is visibly disabled by default.
+- [ ] The reviewer can run Pi with and without `--allow-trusted-code` and explain
+      the difference.
+- [ ] The warning accurately describes ambient authority and lack of sandboxing.
+- [ ] The reviewer can confirm that no `code` tool or runtime exists.
+- [ ] All unit, type, and real-Pi smoke checks pass.
+- [ ] The learning note distinguishes consent from isolation.
+- [ ] The full diff contains no M0.3 or M1 work.
+
+Only after this review may the human mark M0.2 accepted and authorize M0.3.
+
+# Later M0 Unit — Planning Preview Only
 
 ## M0.3 — Add black-box acceptance fixtures
 
-Planned outcome: executable cases name the future V0 behavior and clearly mark pending cases without pretending they pass. Its detailed invariant plan will be written only after M0.2 is accepted.
+Planned outcome: executable cases name the future V0 behavior and clearly mark
+pending cases without pretending they pass. Its detailed invariant plan will be
+written only after M0.2 is accepted.
 
-Neither later unit is authorized by the M0.1 handoff.
+M0.3 is not authorized by this handoff.

@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Experimental TypeScript-first code-mode extension for Pi (scaffold only in M0.1)",
+  "description": "Experimental trust-gated TypeScript-first code-mode extension for Pi",
   "keywords": ["pi-package"],
   "pi": {
     "extensions": ["./src/extension.ts"]

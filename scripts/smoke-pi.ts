@@ -21,10 +21,19 @@ interface SmokeRpcResponse {
   type?: unknown;
 }
 
+interface TrustNotification {
+  message?: unknown;
+  method?: unknown;
+  notifyType?: unknown;
+  type?: unknown;
+}
+
 const SMOKE_RPC_ID = "m0.1-smoke";
 const SMOKE_RPC_COMMAND = "get_state";
 const SMOKE_RPC_RESPONSE_TYPE = "response";
 const MISSING_EXTENSION_PATH = "./src/__m0_1_missing_extension__.ts";
+const TRUSTED_EXECUTION_FLAG = "--allow-trusted-code";
+const TRUSTED_EXECUTION_WARNING_MARKER = "shell-equivalent authority";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const piExecutable = join(
@@ -80,6 +89,7 @@ async function runPi(
   extensionSource: string,
   agentDir: string,
   rpcInput = "",
+  extraArguments: string[] = [],
 ): Promise<PiRun> {
   const child = Bun.spawn(
     [
@@ -91,6 +101,7 @@ async function runPi(
       "--mode",
       "rpc",
       "--no-session",
+      ...extraArguments,
     ],
     {
       cwd: projectRoot,
@@ -113,6 +124,27 @@ async function runPi(
   ]);
 
   return { exitCode, stdout, stderr };
+}
+
+function findTrustNotification(stdout: string): TrustNotification | undefined {
+  for (const line of stdout.split("\n")) {
+    if (!line) continue;
+    try {
+      const record = JSON.parse(line) as TrustNotification;
+      if (
+        record.type === "extension_ui_request" &&
+        record.method === "notify" &&
+        record.notifyType === "warning" &&
+        typeof record.message === "string" &&
+        record.message.includes(TRUSTED_EXECUTION_WARNING_MARKER)
+      ) {
+        return record;
+      }
+    } catch {
+      // Retain malformed output for the failure report below.
+    }
+  }
+  return undefined;
 }
 
 function findSmokeResponse(stdout: string): SmokeRpcResponse | undefined {
@@ -164,6 +196,42 @@ try {
       formatFailure("Pi started but returned no successful RPC response", valid),
     );
   }
+  if (findTrustNotification(valid.stdout)) {
+    throw new Error(
+      formatFailure(
+        "Trusted-execution warning appeared without explicit opt-in",
+        valid,
+      ),
+    );
+  }
+
+  const trusted = await runPi(
+    ".",
+    agentDir,
+    `${JSON.stringify(smokeRpcRequest)}\n`,
+    [TRUSTED_EXECUTION_FLAG],
+  );
+  if (trusted.exitCode !== 0) {
+    throw new Error(
+      formatFailure("Pi failed with trusted execution enabled", trusted),
+    );
+  }
+  if (!findSmokeResponse(trusted.stdout)) {
+    throw new Error(
+      formatFailure(
+        "Trusted Pi session returned no successful RPC response",
+        trusted,
+      ),
+    );
+  }
+  if (!findTrustNotification(trusted.stdout)) {
+    throw new Error(
+      formatFailure(
+        "Trusted Pi session did not emit the shell-authority warning",
+        trusted,
+      ),
+    );
+  }
 
   const invalid = await runPi(MISSING_EXTENSION_PATH, agentDir);
   if (invalid.exitCode === 0) {
@@ -176,7 +244,7 @@ try {
   }
 
   console.log(
-    `Pi ${piVersion} loaded the package manifest and answered RPC; the missing-extension control failed as expected.`,
+    `Pi ${piVersion} loaded the package, kept the default path silent, warned after trusted opt-in, and rejected the missing-extension control.`,
   );
 } finally {
   await rm(agentDir, { recursive: true, force: true });
