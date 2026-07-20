@@ -6,20 +6,22 @@ The central idea is simple: instead of sending every intermediate tool result ba
 
 ## Status
 
-M0.1, the inert Bun/TypeScript package scaffold, is implemented and awaiting human acceptance. No runtime, code execution, tool bridge, or other product behavior exists yet.
+M0.1, the inert Bun/TypeScript package scaffold, is accepted. M0.2 adds an explicit `--allow-trusted-code` opt-in and a shell-authority warning; it does not add a runtime, code execution, tool bridge, or model-facing `code` tool.
 
 - [Project goals](./PROJECT_GOALS.md) defines the product promise, competitive baseline, V0 scope, learning contract, and milestone outcomes.
 - [Project progress](./PROJECT_PROGRESS.md) records the active unit, accepted evidence, and next permitted work.
 - [Architecture and roadmap](./PI_CODE_MODE_ROADMAP.md) records the proposed runtime architecture, security model, approval policy, deferred features, and comparison set.
 - [M0 milestone plan](./docs/milestones/M0_FOUNDATION.md) is the first implementer handoff, including invariants and self-verification.
 
-The first implementation unit is M0.1: scaffold the Pi extension package. Each later unit is intended to be small enough for one focused commit and one focused human review. Implementers stop at `Ready for review`; only a human reviewer marks a unit accepted and authorizes its commit.
+The active implementation unit is M0.2: define the trusted-execution contract. Each unit is intended to be small enough for one focused commit and one focused human review. Implementers stop at `Ready for review`; only a human reviewer marks a unit accepted and authorizes the next unit.
 
 ## V0 trust model
 
 V0 intentionally targets fully trusted execution on a machine or remote computer dedicated to the agent. Its persistent Bun subprocess will have the same practical authority as an unrestricted shell running as that user.
 
 A subprocess provides crash and lifecycle isolation. It is **not** a security sandbox. Do not run untrusted model-generated code on a personal workstation or alongside valuable credentials. Sandboxed and remote execution backends are explicit post-V0 roadmap items.
+
+Future trusted execution is disabled unless Pi is started with `--allow-trusted-code`. Enabling the flag currently shows the trust warning only; M0.2 still executes no generated code.
 
 ## Reference projects
 
