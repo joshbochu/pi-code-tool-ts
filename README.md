@@ -4,9 +4,21 @@ An experimental, TypeScript-first code-mode extension for [Pi](https://pi.dev/) 
 
 The central idea is simple: instead of sending every intermediate tool result back through the model, Pi can give the model one `code` tool. The model writes a TypeScript program that calls Pi tools, loops, filters, aggregates, and returns only the useful result. This should reduce model round trips, context usage, and latency for multi-step workflows.
 
+## Install (development)
+
+This package is still private while it is scaffold-only. Install from git or a local path:
+
+```bash
+pi install git:github.com/joshbochu/pi-code-tool-ts
+# or
+pi install /absolute/path/to/pi-code-tool-ts
+```
+
+npm publish is deferred until the package has real runtime behavior beyond the inert M0.1 loader.
+
 ## Status
 
-M0.1, the inert Bun/TypeScript package scaffold, is implemented and awaiting human acceptance. No runtime, code execution, tool bridge, or other product behavior exists yet.
+M0.1, the inert Bun/TypeScript package scaffold, is on `main`. No runtime, code execution, tool bridge, or other product behavior exists yet.
 
 - [Project goals](./PROJECT_GOALS.md) defines the product promise, competitive baseline, V0 scope, learning contract, and milestone outcomes.
 - [Project progress](./PROJECT_PROGRESS.md) records the active unit, accepted evidence, and next permitted work.

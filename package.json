@@ -1,12 +1,36 @@
 {
-  "name": "pi-code-tool-ts",
-  "version": "0.0.0",
+  "name": "@joshbochu/pi-code-tool-ts",
+  "version": "0.0.1",
   "private": true,
   "type": "module",
   "description": "Experimental TypeScript-first code-mode extension for Pi (scaffold only in M0.1)",
-  "keywords": ["pi-package"],
+  "license": "MIT",
+  "author": "joshbochu",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joshbochu/pi-code-tool-ts.git"
+  },
+  "homepage": "https://github.com/joshbochu/pi-code-tool-ts#readme",
+  "bugs": {
+    "url": "https://github.com/joshbochu/pi-code-tool-ts/issues"
+  },
+  "keywords": [
+    "pi-package",
+    "pi",
+    "pi-extension",
+    "code-mode",
+    "bun",
+    "typescript"
+  ],
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
   "pi": {
-    "extensions": ["./src/extension.ts"]
+    "extensions": [
+      "./src/extension.ts"
+    ]
   },
   "scripts": {
     "test": "bun test",
