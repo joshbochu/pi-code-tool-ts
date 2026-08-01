@@ -6,7 +6,7 @@ The central idea is simple: instead of sending every intermediate tool result ba
 
 ## Install (development)
 
-This package is still private while it is scaffold-only. Install from git or a local path:
+This package is still private during early M0 development. Install from git or a local path:
 
 ```bash
 pi install git:github.com/joshbochu/pi-code-tool-ts
@@ -14,24 +14,26 @@ pi install git:github.com/joshbochu/pi-code-tool-ts
 pi install /absolute/path/to/pi-code-tool-ts
 ```
 
-npm publish is deferred until the package has real runtime behavior beyond the inert M0.1 loader.
+npm publish is deferred until the package has real runtime behavior.
 
 ## Status
 
-M0.1, the inert Bun/TypeScript package scaffold, is on `main`. No runtime, code execution, tool bridge, or other product behavior exists yet.
+M0.1, the inert Bun/TypeScript package scaffold, is accepted on `main`. M0.2, the explicit trusted-execution consent contract, is implemented and ready for human review. No runtime, code execution, tool bridge, or model-facing `code` tool exists yet.
 
 - [Project goals](./PROJECT_GOALS.md) defines the product promise, competitive baseline, V0 scope, learning contract, and milestone outcomes.
 - [Project progress](./PROJECT_PROGRESS.md) records the active unit, accepted evidence, and next permitted work.
 - [Architecture and roadmap](./PI_CODE_MODE_ROADMAP.md) records the proposed runtime architecture, security model, approval policy, deferred features, and comparison set.
 - [M0 milestone plan](./docs/milestones/M0_FOUNDATION.md) is the first implementer handoff, including invariants and self-verification.
 
-The first implementation unit is M0.1: scaffold the Pi extension package. Each later unit is intended to be small enough for one focused commit and one focused human review. Implementers stop at `Ready for review`; only a human reviewer marks a unit accepted and authorizes its commit.
+The active implementation unit is M0.2: define an explicit trusted-execution opt-in without executing code yet. It is now at its human review checkpoint. Each unit is intended to be small enough for one focused commit and one focused human review. Only a human reviewer marks a unit accepted and authorizes the next unit.
 
 ## V0 trust model
 
 V0 intentionally targets fully trusted execution on a machine or remote computer dedicated to the agent. Its persistent Bun subprocess will have the same practical authority as an unrestricted shell running as that user.
 
 A subprocess provides crash and lifecycle isolation. It is **not** a security sandbox. Do not run untrusted model-generated code on a personal workstation or alongside valuable credentials. Sandboxed and remote execution backends are explicit post-V0 roadmap items.
+
+Future trusted execution is disabled unless Pi starts with `--allow-trusted-code`. In M0.2, enabling that flag only shows the shell-authority warning: it does not register a `code` tool, start a subprocess, or execute generated TypeScript. The flag records informed consent; it provides no isolation.
 
 ## Reference projects
 
