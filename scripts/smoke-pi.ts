@@ -42,7 +42,7 @@ const smokeRpcRequest: SmokeRpcRequest = {
 function formatFailure(message: string, run: PiRun): string {
   return [
     message,
-    `exit code: ${run.exitCode}`,
+    `exit code: ${String(run.exitCode)}`,
     `stdout:\n${run.stdout || "<empty>"}`,
     `stderr:\n${run.stderr || "<empty>"}`,
   ].join("\n");
@@ -102,9 +102,9 @@ async function runPi(
   );
 
   if (rpcInput) {
-    child.stdin.write(rpcInput);
+    await child.stdin.write(rpcInput);
   }
-  child.stdin.end();
+  await child.stdin.end();
 
   const [exitCode, stdout, stderr] = await Promise.all([
     child.exited,

@@ -1,5 +1,8 @@
 import { describe, expect, test } from "bun:test";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import extension from "../src/extension";
+
+const extensionAtRuntime: (pi: ExtensionAPI) => unknown = extension;
 
 describe("extension factory", () => {
   test("default export is a function", () => {
@@ -7,7 +10,7 @@ describe("extension factory", () => {
   });
 
   test("returns undefined without throwing", () => {
-    const result = extension({} as never);
+    const result = extensionAtRuntime({} as ExtensionAPI);
     expect(result).toBeUndefined();
   });
 
@@ -20,6 +23,7 @@ describe("extension factory", () => {
         },
       },
     );
-    expect(extension(hostile as never)).toBeUndefined();
+    const result = extensionAtRuntime(hostile as ExtensionAPI);
+    expect(result).toBeUndefined();
   });
 });
