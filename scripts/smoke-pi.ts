@@ -161,7 +161,10 @@ try {
   }
   if (!findSmokeResponse(valid.stdout)) {
     throw new Error(
-      formatFailure("Pi started but returned no successful RPC response", valid),
+      formatFailure(
+        "Pi started but returned no successful RPC response",
+        valid,
+      ),
     );
   }
 

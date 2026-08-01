@@ -36,7 +36,9 @@
     "test": "bun test",
     "typecheck": "tsc --noEmit",
     "lint": "eslint eslint.config.js src test scripts --max-warnings=0",
-    "check": "bun run typecheck && bun run lint && bun test",
+    "format": "prettier --write --ignore-unknown .",
+    "format:check": "prettier --check --ignore-unknown .",
+    "check": "bun run format:check && bun run typecheck && bun run lint && bun test",
     "smoke:pi": "bun scripts/smoke-pi.ts"
   },
   "peerDependencies": {
@@ -47,6 +49,7 @@
     "@earendil-works/pi-coding-agent": "0.80.10",
     "@types/bun": "^1.3.14",
     "eslint": "^10.8.0",
+    "prettier": "^3.9.6",
     "typescript-eslint": "^8.65.0",
     "typescript": "^5.8.3"
   }
